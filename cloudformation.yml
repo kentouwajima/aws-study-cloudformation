@@ -121,3 +121,49 @@ Resources:
       VpcEndpointType: Gateway
       RouteTableIds:
         - !Ref PublicRouteTable
+
+  # ----------------------------
+  # Security Group for EC2
+  # ----------------------------
+  StudyEC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: aws-study-ec2-sg
+      GroupDescription: Security group for aws-study-ec2
+      VpcId: !Ref StudyVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: aws-study-ec2-sg
+
+  # ----------------------------
+  # EC2 Instance
+  # ----------------------------
+  StudyEC2:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t3.micro
+      ImageId: !Sub "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64}}"
+      KeyName: kentouwajima
+      SubnetId: !Ref PublicSubnet1a
+      SecurityGroupIds:
+        - !Ref StudyEC2SecurityGroup
+      Tags:
+        - Key: Name
+          Value: aws-study-ec2
