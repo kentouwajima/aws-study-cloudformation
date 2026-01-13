@@ -227,3 +227,59 @@ Resources:
       SubnetIds:
         - !Ref PrivateSubnet1a
         - !Ref PrivateSubnet1c
+
+  # ----------------------------
+  # Application Load Balancer
+  # ----------------------------
+  StudyALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: aws-study-alb
+      Type: application
+      Scheme: internet-facing
+      IpAddressType: ipv4
+      Subnets:
+        - !Ref PublicSubnet1a
+        - !Ref PublicSubnet1c
+      SecurityGroups:
+        - !Ref StudyEC2SecurityGroup
+      Tags:
+        - Key: Name
+          Value: aws-study-alb
+
+  # ----------------------------
+  # Target Group for ALB
+  # ----------------------------
+  StudyTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: aws-study-tg
+      TargetType: instance
+      VpcId: !Ref StudyVPC
+      Protocol: HTTP
+      Port: 8080
+      HealthCheckProtocol: HTTP
+      HealthCheckPort: traffic-port
+      HealthCheckPath: /
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 5
+      UnhealthyThresholdCount: 2
+      Matcher:
+        HttpCode: 200
+      Tags:
+        - Key: Name
+          Value: aws-study-tg
+          
+  # ----------------------------
+  # ALB Listener
+  # ----------------------------
+  StudyALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref StudyALB
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref StudyTargetGroup
