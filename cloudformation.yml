@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: AWS Study CloudFormation - VPC Base Network
+Description: AWS Study CloudFormation
 
 Resources:
   # ----------------------------
@@ -167,3 +167,63 @@ Resources:
       Tags:
         - Key: Name
           Value: aws-study-ec2
+
+  # ----------------------------
+  # Security Group for RDS
+  # ----------------------------
+  StudyRDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: aws-study-rds-sg
+      GroupDescription: Security group for aws-study-rds
+      VpcId: !Ref StudyVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          SourceSecurityGroupId: !Ref StudyEC2SecurityGroup
+      Tags:
+        - Key: Name
+          Value: aws-study-rds-sg
+  
+  # ----------------------------
+  # RDS Instance
+  # ----------------------------
+  StudyRDS:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: aws-study-rds
+      Engine: mysql
+      EngineVersion: "8.0.43"
+      DBName: awsstudy
+      MasterUsername: root
+      MasterUserPassword: rootroot
+      DBInstanceClass: db.t4g.micro
+      AllocatedStorage: 20
+      MaxAllocatedStorage: 1000
+      StorageType: gp2
+      StorageEncrypted: false
+      MultiAZ: false
+      PubliclyAccessible: false
+      Port: 3306
+      VPCSecurityGroups:
+        - !Ref StudyRDSSecurityGroup
+      DBSubnetGroupName: !Ref StudyRDSSubnetGroup
+      BackupRetentionPeriod: 7
+      AutoMinorVersionUpgrade: true
+      DeletionProtection: false
+      EnableIAMDatabaseAuthentication: false
+      Tags:
+        - Key: Name
+          Value: aws-study-rds
+
+  # ----------------------------
+  # RDS Subnet Group
+  # ----------------------------
+  StudyRDSSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: subnet group for aws-study-rds
+      SubnetIds:
+        - !Ref PrivateSubnet1a
+        - !Ref PrivateSubnet1c
