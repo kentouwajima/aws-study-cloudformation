@@ -111,7 +111,7 @@ Resources:
       RouteTableId: !Ref PublicRouteTable
 
   # ----------------------------
-  # S3 VPC Endpoint (Gateway)
+  # S3 VPC Endpoint 
   # ----------------------------
   S3VpcEndpoint:
     Type: AWS::EC2::VPCEndpoint
