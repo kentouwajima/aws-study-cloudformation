@@ -111,7 +111,7 @@ Resources:
       RouteTableId: !Ref PublicRouteTable
 
   # ----------------------------
-  # S3 VPC Endpoint (Gateway)
+  # S3 VPC Endpoint 
   # ----------------------------
   S3VpcEndpoint:
     Type: AWS::EC2::VPCEndpoint
@@ -121,6 +121,24 @@ Resources:
       VpcEndpointType: Gateway
       RouteTableIds:
         - !Ref PublicRouteTable
+  
+  # ----------------------------
+  # Security Group for ALB
+  # ----------------------------
+  StudyALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: aws-study-alb-sg
+      GroupDescription: Security group for ALB 
+      VpcId: !Ref StudyVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: aws-study-alb-sg
 
   # ----------------------------
   # Security Group for EC2
@@ -135,19 +153,11 @@ Resources:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          CidrIp: 0.0.0.0/0
+          CidrIp: 118.6.173.228/32
         - IpProtocol: tcp
           FromPort: 8080
           ToPort: 8080
-          CidrIp: 0.0.0.0/0
+          SourceSecurityGroupId: !Ref StudyALBSecurityGroup
       Tags:
         - Key: Name
           Value: aws-study-ec2-sg
@@ -242,7 +252,7 @@ Resources:
         - !Ref PublicSubnet1a
         - !Ref PublicSubnet1c
       SecurityGroups:
-        - !Ref StudyEC2SecurityGroup
+        - !Ref StudyALBSecurityGroup
       Tags:
         - Key: Name
           Value: aws-study-alb
@@ -267,6 +277,9 @@ Resources:
       UnhealthyThresholdCount: 2
       Matcher:
         HttpCode: 200
+      Targets:
+        - Id: !Ref StudyEC2
+          Port: 8080
       Tags:
         - Key: Name
           Value: aws-study-tg
