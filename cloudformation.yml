@@ -1,6 +1,15 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: AWS Study CloudFormation
 
+Parameters:
+  # ----------------------------
+  # Parameters 
+  # ----------------------------
+  AlertEmail:
+    Description: Email address for CPU alarm notifications
+    Type: String
+    Default: "u.kento6366@gmail.com"
+
 Resources:
   # ----------------------------
   # VPC
@@ -296,3 +305,43 @@ Resources:
       DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref StudyTargetGroup
+
+  # ----------------------------
+  # SNS Topic 
+  # ----------------------------
+  StudySNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: aws-study-cpu-alarm-topic
+      DisplayName: AWS Study Alarm
+
+  # ----------------------------
+  # SNS Subscription 
+  # ----------------------------
+  StudySNSSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref StudySNSTopic
+      Protocol: email
+      Endpoint: !Ref AlertEmail 
+
+  # ----------------------------
+  # CloudWatch Alarm 
+  # ----------------------------
+  StudyCPUAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: aws-study-ec2-cpu-high
+      AlarmDescription: Alarm when CPU exceeds 10%
+      Namespace: AWS/EC2
+      MetricName: CPUUtilization
+      Dimensions:
+        - Name: InstanceId
+          Value: !Ref StudyEC2
+      Statistic: Average
+      Period: 300            
+      EvaluationPeriods: 1   
+      Threshold: 10          
+      ComparisonOperator: GreaterThanThreshold
+      AlarmActions:
+        - !Ref StudySNSTopic
