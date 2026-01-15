@@ -345,3 +345,40 @@ Resources:
       ComparisonOperator: GreaterThanThreshold
       AlarmActions:
         - !Ref StudySNSTopic
+
+  # ----------------------------
+  # WAF Web ACL 
+  # ----------------------------
+  StudyWebACL:
+    Type: AWS::WAFv2::WebACL
+    Properties:
+      Name: aws-study-waf-webacl
+      Scope: REGIONAL 
+      DefaultAction:
+        Allow: {} 
+      VisibilityConfig:
+        CloudWatchMetricsEnabled: true
+        MetricName: aws-study-waf-metrics
+        SampledRequestsEnabled: true
+      Rules:
+        - Name: AWS-AWSManagedRulesCommonRuleSet
+          Priority: 0
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesCommonRuleSet 
+          OverrideAction:
+            None: {}
+          VisibilityConfig:
+            CloudWatchMetricsEnabled: true
+            MetricName: AWS-AWSManagedRulesCommonRuleSet
+            SampledRequestsEnabled: true
+
+  # ----------------------------
+  # WAF Association 
+  # ----------------------------
+  StudyWebACLAssociation:
+    Type: AWS::WAFv2::WebACLAssociation
+    Properties:
+      ResourceArn: !Ref StudyALB
+      WebACLArn: !GetAtt StudyWebACL.Arn
