@@ -411,13 +411,15 @@ Resources:
     Properties:
       AlarmName: aws-study-waf-blocked
       AlarmDescription: Alarm when WAF blocks any request
-      Namespace: AWS/WAFv2
+      Namespace: AWS/WAFV2
       MetricName: BlockedRequests 
       Dimensions:
         - Name: WebACL
           Value: aws-study-waf-webacl
         - Name: Region
-          Value: !Ref "AWS::Region"
+          Value: !Sub "${AWS::Region}"
+        - Name: Rule
+          Value: ALL
       Statistic: Sum
       Period: 60 
       EvaluationPeriods: 1
