@@ -326,7 +326,7 @@ Resources:
       Endpoint: !Ref AlertEmail 
 
   # ----------------------------
-  # CloudWatch Alarm 
+  # CloudWatch Alarm (EC2 CPU)
   # ----------------------------
   StudyCPUAlarm:
     Type: AWS::CloudWatch::Alarm
@@ -358,7 +358,7 @@ Resources:
         Allow: {} 
       VisibilityConfig:
         CloudWatchMetricsEnabled: true
-        MetricName: aws-study-waf-metrics
+        MetricName: aws-study-waf-webacl
         SampledRequestsEnabled: true
       Rules:
         - Name: AWS-AWSManagedRulesCommonRuleSet
@@ -382,3 +382,49 @@ Resources:
     Properties:
       ResourceArn: !Ref StudyALB
       WebACLArn: !GetAtt StudyWebACL.Arn
+
+  # ----------------------------
+  # WAF Log Group 
+  # ----------------------------
+  StudyWAFLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "aws-waf-logs-study-${AWS::StackName}"
+      RetentionInDays: 7 
+
+  # ----------------------------
+  # WAF Logging Configuration 
+  # ----------------------------
+  StudyWAFLogging:
+    Type: AWS::WAFv2::LoggingConfiguration
+    DependsOn: StudyWAFLogGroup
+    Properties:
+      ResourceArn: !GetAtt StudyWebACL.Arn
+      LogDestinationConfigs:
+        - !GetAtt StudyWAFLogGroup.Arn
+
+  # ----------------------------
+  # CloudWatch Alarm (WAF Blocked) 
+  # ----------------------------
+  StudyWAFBlockedAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: aws-study-waf-blocked
+      AlarmDescription: Alarm when WAF blocks any request
+      Namespace: AWS/WAFV2
+      MetricName: BlockedRequests 
+      Dimensions:
+        - Name: WebACL
+          Value: aws-study-waf-webacl
+        - Name: Region
+          Value: !Sub "${AWS::Region}"
+        - Name: Rule
+          Value: ALL
+      Statistic: Sum
+      Period: 60 
+      EvaluationPeriods: 1
+      Threshold: 0 
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref StudySNSTopic
